@@ -1,6 +1,7 @@
 import os
-
 from googleapiclient.discovery import build
+from src.channel import Channel
+from src.httperror import HttpError
 
 
 class Video:
@@ -8,20 +9,25 @@ class Video:
     def __init__(self, video_id):
         """ метод  init, получает для класса id видео + определение переменных класса"""
         self.video_id = video_id
+
         api_key: str = 'AIzaSyB5hhIW1yHBoo4ZoayTT0Wi4hMqhWeos9c'
         self.youtube = build('youtube', 'v3', developerKey=api_key)
-        video_response = self.youtube.videos().list(part='snippet,statistics,contentDetails,topicDetails',
+        video_response = Channel.get_service().videos().list(part='snippet,statistics,contentDetails,topicDetails',
                                                     id=video_id
                                                     ).execute()
-        self.video_title: str = video_response['items'][0]['snippet']['title']  # название видео
-        self.view_count: int = video_response['items'][0]['statistics']['viewCount']  # количество просмотров
-        self.like_count: int = video_response['items'][0]['statistics']['likeCount']  # количество лайков
-        self.comment_count: int = video_response['items'][0]['statistics']['commentCount']  # количество комментариев
-        self.url_video = f"https://www.youtube.com/channel/{self.video_id}"  # адрес видео
+        if not video_response["items"]:
+            self.title = self.like_count = self.view_count = self.comment_count = self.url_video = None
+            raise HttpError("Пустой ответ")
+        else:
+            self.title: str = video_response['items'][0]['snippet']['title']  # название видео
+            self.view_count: int = video_response['items'][0]['statistics']['viewCount']  # количество просмотров
+            self.like_count: int = video_response['items'][0]['statistics']['likeCount']  # количество лайков
+            self.comment_count: int = video_response['items'][0]['statistics']['commentCount']  # количество комментариев
+            self.url_video = f"https://www.youtube.com/channel/{self.video_id}"  # адрес видео
 
     def __str__(self):
         """реализация сетода str"""
-        return f"{self.video_title}"
+        return f"{self.title}"
 
 
 class PLVideo(Video):
